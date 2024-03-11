@@ -1,0 +1,86 @@
+
+// Developer: Forex Robot Easy Team
+// Website: forexroboteasy.com
+
+// Include necessary libraries
+#include <Trade\Trade.mqh>
+
+// Define constants
+#define STOP_LOSS_LEVEL 50
+#define TAKE_PROFIT_LEVEL 100
+#define LOT_SIZE 0.01
+#define RISK_TOLERANCE 0.02
+
+// Define global variables
+double AccountBalance;
+double AccountEquity;
+
+// Initialize trading functions
+CTrade Trade;
+
+// Function to execute buy order
+void BuyOrder(double price)
+{
+    double stopLoss = price - STOP_LOSS_LEVEL * _Point;
+    double takeProfit = price + TAKE_PROFIT_LEVEL * _Point;
+    
+    Trade.Buy(LotsOptimized(), price, stopLoss, takeProfit, 'Prophet EA');
+}
+
+// Function to execute sell order
+void SellOrder(double price)
+{
+    double stopLoss = price + STOP_LOSS_LEVEL * _Point;
+    double takeProfit = price - TAKE_PROFIT_LEVEL * _Point;
+    
+    Trade.Sell(LotsOptimized(), price, stopLoss, takeProfit, 'Prophet EA');
+}
+
+// Function to optimize lot size based on risk tolerance
+double LotsOptimized()
+{
+    double maxRisk = AccountEquity * RISK_TOLERANCE;
+    double lotSize = NormalizeDouble(maxRisk / STOP_LOSS_LEVEL, 2);
+    
+    return lotSize;
+}
+
+// Function to monitor and report Prophet EA's performance
+void MonitorPerformance()
+{
+    double winRate = (AccountEquity - AccountBalance) / AccountBalance * 100;
+    double profitLoss = AccountEquity - AccountBalance;
+    
+    Print('Prophet EA Performance:');
+    Print('Win Rate: ', winRate, '%');
+    Print('Profit/Loss: $', profitLoss);
+}
+
+// Main function
+void OnTick()
+{
+    // Get account balance and equity
+    AccountBalance = AccountInfoDouble(ACCOUNT_BALANCE);
+    AccountEquity = AccountInfoDouble(ACCOUNT_EQUITY);
+    
+    // Execute trading signals based on algorithm's logic
+    if (AlgorithmSignal)
+    {
+        double currentPrice = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
+        
+        // Execute buy order
+        if (AlgorithmSignal == BUY_SIGNAL)
+        {
+            BuyOrder(currentPrice);
+        }
+        
+        // Execute sell order
+        else if (AlgorithmSignal == SELL_SIGNAL)
+        {
+            SellOrder(currentPrice);
+        }
+    }
+    
+    // Monitor performance
+    MonitorPerformance();
+}
